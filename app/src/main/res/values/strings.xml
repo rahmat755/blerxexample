@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">test</string>
+    <string name="value">Value:</string>
+    <string name="uuid">UUID:</string>
+</resources>
