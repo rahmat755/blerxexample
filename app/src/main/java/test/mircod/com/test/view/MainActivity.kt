@@ -1,6 +1,7 @@
 package test.mircod.com.test.view
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -18,7 +19,12 @@ import pub.devrel.easypermissions.EasyPermissions
 import test.mircod.com.test.adapter.ScanResAdapter
 import test.mircod.com.test.App
 import test.mircod.com.test.R
+import test.mircod.com.test.model.BluetoothModule
+import javax.inject.Inject
+import android.bluetooth.BluetoothAdapter
 
+
+const val REQUEST_ENABLE_BT = 1
 
 class MainActivity : AppCompatActivity(), ScanResAdapter.OnItemClickListener {
 
@@ -28,7 +34,8 @@ class MainActivity : AppCompatActivity(), ScanResAdapter.OnItemClickListener {
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.BLUETOOTH_ADMIN,
             Manifest.permission.BLUETOOTH)
-
+    @Inject
+    lateinit var bleModule: BluetoothModule
     var macAddress: String? = null
     private lateinit var rxBleClient: RxBleClient
     var mAdapter: ScanResAdapter? = null
@@ -37,17 +44,34 @@ class MainActivity : AppCompatActivity(), ScanResAdapter.OnItemClickListener {
         super.onCreate(savedInstanceState)
         disposable = CompositeDisposable()
         setContentView(R.layout.activity_main)
+        App.appComponent.injectMain(this)
         mAdapter = ScanResAdapter(this)
         bluetooth_recycler.apply {
             adapter = mAdapter
             layoutManager = LinearLayoutManager(this@MainActivity)
         }
-        startSearch()
+        val mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+        if (mBluetoothAdapter != null) {
+            if (!mBluetoothAdapter.isEnabled) {
+                val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT)
+            } else {
+                startSearch()
+            }
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == REQUEST_ENABLE_BT)
+            if (resultCode == Activity.RESULT_OK)
+                startSearch()
+            else
+                finish()
     }
 
     private fun startSearch() {
         if (EasyPermissions.hasPermissions(this, *perms)) {
-            rxBleClient = App.bleClient
+            rxBleClient = bleModule.getBleClient()
             disposable?.add(rxBleClient.scanBleDevices(
                     ScanSettings.Builder().build(),
                     ScanFilter.Builder().build()
@@ -61,6 +85,8 @@ class MainActivity : AppCompatActivity(), ScanResAdapter.OnItemClickListener {
                             }, {
                         it.printStackTrace()
                         Log.d("Error", it.localizedMessage)
+                    },{
+                        disposable?.dispose()
                     }
                     ))
         } else {
@@ -70,10 +96,10 @@ class MainActivity : AppCompatActivity(), ScanResAdapter.OnItemClickListener {
     }
 
     override fun onClick(item: ScanResult) {
-            val intent = Intent(this, ServiceActivity::class.java)
-            macAddress = item.bleDevice.macAddress
-            intent.putExtra("macAddress", macAddress)
-            startActivity(intent)
+        val intent = Intent(this, ServiceActivity::class.java)
+        macAddress = item.bleDevice.macAddress
+        intent.putExtra("macAddress", macAddress)
+        startActivity(intent)
     }
 
     override fun onPause() {

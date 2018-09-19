@@ -12,7 +12,7 @@ import java.util.*
 
 class ScanResAdapter(private val viewAction: OnItemClickListener) : RecyclerView.Adapter<ScanResAdapter.ViewHolder>() {
 
-    interface OnItemClickListener{
+    interface OnItemClickListener {
         fun onClick(item: ScanResult)
     }
 
@@ -27,7 +27,13 @@ class ScanResAdapter(private val viewAction: OnItemClickListener) : RecyclerView
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val rxBleScanResult = data[position]
         val bleDevice = rxBleScanResult.bleDevice
-        holder.macAddr?.text = String.format(Locale.getDefault(), "${bleDevice.macAddress} ${bleDevice.name ?: ""}")
+        if (bleDevice.name != null){
+            holder.deviceName?.visibility = View.VISIBLE
+
+            holder.deviceName?.text = String.format(Locale.getDefault(), "DEVICE NAME: %s",bleDevice.name ?: "")
+        } else
+            holder.deviceName?.visibility = View.GONE
+        holder.macAddr?.text = String.format(Locale.getDefault(),"MAC: %s", bleDevice.macAddress)
         holder.rssi?.text = String.format(Locale.getDefault(), "RSSI: %d", rxBleScanResult.rssi)
         holder.itemView.setOnClickListener { viewAction.onClick(rxBleScanResult) }
     }
@@ -35,8 +41,10 @@ class ScanResAdapter(private val viewAction: OnItemClickListener) : RecyclerView
     class ViewHolder(itemView: View?) : RecyclerView.ViewHolder(itemView) {
         val macAddr: TextView? = itemView?.findViewById(R.id.mac_addr)
         val rssi: TextView? = itemView?.findViewById(R.id.rssi)
+        val deviceName: TextView? = itemView?.findViewById(R.id.device_name)
     }
-    fun addItems(item: ScanResult){
+
+    fun addItems(item: ScanResult) {
         for (i in 0 until data.size) {
             if (data[i].bleDevice == item.bleDevice) {
                 data[i] = item
@@ -46,7 +54,8 @@ class ScanResAdapter(private val viewAction: OnItemClickListener) : RecyclerView
         data.add(item)
         notifyDataSetChanged()
     }
-    fun clearItems(){
+
+    fun clearItems() {
         data.clear()
         notifyDataSetChanged()
     }

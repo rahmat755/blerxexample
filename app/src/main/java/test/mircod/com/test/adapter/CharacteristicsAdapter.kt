@@ -10,7 +10,7 @@ import test.mircod.com.test.model.BLECharacteristics
 
 
 class CharacteristicsAdapter(private val viewAction: OnItemClickListener) : RecyclerView.Adapter<CharacteristicsAdapter.ViewHolder>() {
-    interface OnItemClickListener{
+    interface OnItemClickListener {
         fun onClick(item: BLECharacteristics)
     }
 
@@ -26,14 +26,17 @@ class CharacteristicsAdapter(private val viewAction: OnItemClickListener) : Recy
         val bluetoothGattService = data[position]
         holder.characteristicsUUID?.text = bluetoothGattService.UUID.toString()
         holder.characteristicsData?.text = bluetoothGattService.data.toString()
-        holder.itemView.setOnClickListener { viewAction.onClick(bluetoothGattService) }
+        holder.itemView.setOnClickListener {
+            viewAction.onClick(bluetoothGattService)
+        }
     }
 
     class ViewHolder(itemView: View?) : RecyclerView.ViewHolder(itemView) {
         val characteristicsUUID: TextView? = itemView?.findViewById(R.id.characteristic_uuid)
         val characteristicsData: TextView? = itemView?.findViewById(R.id.characteristic_data)
     }
-    fun addItems(item: BLECharacteristics){
+
+    fun addItems(item: BLECharacteristics) {
         for (i in 0 until data.size) {
             if (data[i].UUID == item.UUID) {
                 data[i] = item
@@ -44,7 +47,8 @@ class CharacteristicsAdapter(private val viewAction: OnItemClickListener) : Recy
         data.add(item)
         notifyDataSetChanged()
     }
-    fun updateData(item: BLECharacteristics){
+
+    fun updateData(item: BLECharacteristics) {
         for (i in 0 until data.size) {
             if (data[i].UUID == item.UUID) {
                 data[i] = item
@@ -54,7 +58,8 @@ class CharacteristicsAdapter(private val viewAction: OnItemClickListener) : Recy
         }
 
     }
-    fun clearItems(){
+
+    fun clearItems() {
         data.clear()
         notifyDataSetChanged()
     }
